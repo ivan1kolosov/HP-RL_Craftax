@@ -1,7 +1,9 @@
 class Scenario:
     def __init__(self):
         self.values = None
-        self.task = map() #what is the best way to implement this?
+        # self.task = map() #what is the best way to implement this?
+
+        self.task = "No task"
 
     def get_maps(self, state) -> tuple: #(torch.Tensor, torch.Tensor)
         return NotImplementedError
@@ -20,4 +22,4 @@ class TacticAgent:
         pass
 
     def get_scen(self, state):
-        return NotImplementedError
+        return Scenario()
