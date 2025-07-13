@@ -62,9 +62,7 @@ KEY_MAPPING = {
 size_tactic_agent = 100
 
 class CraftaxRenderer:
-    def __init__(self, env: CraftaxEnv, env_params, pixel_render_size=4):
-        self.env = env
-        self.env_params = env_params
+    def __init__(self, pixel_render_size=4):
         self.pixel_render_size = pixel_render_size
         self.pygame_events = []
 

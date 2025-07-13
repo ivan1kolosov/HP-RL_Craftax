@@ -1,3 +1,5 @@
+from craftax.craftax.envs.craftax_symbolic_env import CraftaxSymbolicEnv
+
 class Scenario:
     def __init__(self):
         self.values = None
@@ -5,7 +7,7 @@ class Scenario:
 
         self.task = "No task"
 
-    def get_maps(self, state) -> tuple: #(torch.Tensor, torch.Tensor)
+    def get_maps(self, state) -> tuple: #(tensorflow.Tensor, tensorflow.Tensor)
         return NotImplementedError
     
     def is_action(self):
@@ -14,7 +16,7 @@ class Scenario:
     def get_action(self):
         return NotImplementedError
     
-    def get_reward(self, state, next_state) -> float:
+    def get_reward(self, state: CraftaxSymbolicEnv, next_state: CraftaxSymbolicEnv) -> float:
         return NotImplementedError
 
 class TacticAgent:
