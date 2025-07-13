@@ -1,11 +1,11 @@
 from craftax.craftax.envs.craftax_symbolic_env import CraftaxSymbolicEnv
+from craftax.craftax.constants import BlockType, MobType
 
 class Scenario:
     def __init__(self):
-        self.values = None
+        self.values = {BlockType.TREE: 0.5, MobType.MELEE: -1.0}
         # self.task = map() #what is the best way to implement this?
-
-        self.task = "No task"
+        self.task = "Explore"
 
     def get_maps(self, state) -> tuple: #(tensorflow.Tensor, tensorflow.Tensor)
         return NotImplementedError
