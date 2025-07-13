@@ -20,7 +20,7 @@ if __name__ == "__main__":
     while not done:
 
         scen = tactic_agent.get_scen(state)
-        
+
         action = agent.get_action(state, scen)
         
         next_state, reward, done, info = env.step(action, print_achievements=True)
@@ -33,5 +33,7 @@ if __name__ == "__main__":
 
         state = next_state
 
-    traj.save()
     pygame.quit()
+    traj.save()
+
+    print("Sum reward: " + str(traj.get_sum_reward()))

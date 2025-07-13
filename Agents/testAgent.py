@@ -24,5 +24,3 @@ class TestAgent:
                 return action
         
             self.renderer.update()
-        
-        

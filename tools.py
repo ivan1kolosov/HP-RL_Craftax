@@ -60,3 +60,6 @@ class Trajectory:
         Path(directory).mkdir(parents=True, exist_ok=True)    
         with bz2.BZ2File(save_name + ".pbz2", "w") as f:
             pickle.dump(self.data, f)
+    
+    def get_sum_reward(self):
+        return sum(self.data["reward"])
