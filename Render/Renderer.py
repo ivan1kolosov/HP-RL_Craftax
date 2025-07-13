@@ -59,7 +59,7 @@ KEY_MAPPING = {
     pygame.K_SEMICOLON: Action.ENCHANT_BOW,
 }
 
-size_tactic_agent = 100
+size_tactic_agent = 500
 
 class CraftaxRenderer:
     def __init__(self, pixel_render_size=4):
@@ -67,10 +67,10 @@ class CraftaxRenderer:
         self.pygame_events = []
 
         self.screen_size = (
-            OBS_DIM[1] * BLOCK_PIXEL_SIZE_HUMAN * pixel_render_size,
+            OBS_DIM[1] * BLOCK_PIXEL_SIZE_HUMAN * pixel_render_size + size_tactic_agent,
             (OBS_DIM[0] + INVENTORY_OBS_HEIGHT)
             * BLOCK_PIXEL_SIZE_HUMAN
-            * pixel_render_size + size_tactic_agent,
+            * pixel_render_size,
         )
 
         # Init rendering
@@ -105,7 +105,12 @@ class CraftaxRenderer:
         pixels = jnp.repeat(pixels, repeats=self.pixel_render_size, axis=1)
 
         surface = pygame.surfarray.make_surface(np.array(pixels).transpose((1, 0, 2)))
-        self.screen_surface.blit(surface, (0, size_tactic_agent))
+        self.screen_surface.blit(surface, (size_tactic_agent, 0))
+
+        text_area_width = size_tactic_agent  # Width of the text area
+        text_area_height = self.screen_surface.get_height()  # Full height of the screen
+        gray_color = (39, 39, 39)  # Light gray color
+        pygame.draw.rect(self.screen_surface, gray_color, (0, 0, text_area_width, text_area_height))
         self.screen_surface.blit(self.font(scen.task), (0, 0))
 
     def is_quit_requested(self):
