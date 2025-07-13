@@ -82,12 +82,18 @@ class CraftaxRenderer:
         self._render = jax.jit(render_craftax_pixels, static_argnums=(1,))
 
 
-    def font(self, task):
-        font = pygame.font.Font(None, 36)
+    def font(self, task, values):
+        font1 = pygame.font.Font(None, 45)
+        font2 = pygame.font.Font(None, 30)
         text_color = (255, 255, 255)
         message = "Task: " + task
-        text = font.render(message, True, text_color)
-        return text
+        for k, v in values.items():
+            message += '\n' + str(k) + ': ' + str(v)
+        lines = message.split('\n')
+        rendered_lines = [font1.render(lines[0], True, (255, 70, 70))]
+        rendered_lines += [font2.render(line, True, text_color) for line in lines[1:]]
+        return rendered_lines
+    
 
     def update(self):
         # Update pygame events
@@ -107,11 +113,17 @@ class CraftaxRenderer:
         surface = pygame.surfarray.make_surface(np.array(pixels).transpose((1, 0, 2)))
         self.screen_surface.blit(surface, (size_tactic_agent, 0))
 
-        text_area_width = size_tactic_agent  # Width of the text area
-        text_area_height = self.screen_surface.get_height()  # Full height of the screen
-        gray_color = (39, 39, 39)  # Light gray color
+        text_area_width = size_tactic_agent
+        text_area_height = self.screen_surface.get_height()
+        gray_color = (39, 39, 39)
+
         pygame.draw.rect(self.screen_surface, gray_color, (0, 0, text_area_width, text_area_height))
-        self.screen_surface.blit(self.font(scen.task), (0, 0))
+        rendered_lines = self.font(scen.task, scen.values)
+
+        y_offset = 0
+        for line in rendered_lines:
+            self.screen_surface.blit(line, (0, y_offset))
+            y_offset += line.get_height() + 5
 
     def is_quit_requested(self):
         for event in self.pygame_events:
