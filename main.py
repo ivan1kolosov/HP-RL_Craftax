@@ -1,73 +1,37 @@
 import pygame
 
-import jax
-import numpy as np
-
-from craftax.craftax_env import make_craftax_env_from_name
-
 from Agents.rl_model import RlAgent
 from Agents.tacticAgent import TacticAgent
 from Agents.testAgent import TestAgent
 
-from tools import save_traj_history, print_new_achievements
+from tools import CraftaxEnv, Trajectory
 
 if __name__ == "__main__":
 
-    env = make_craftax_env_from_name("Craftax-Symbolic-v1", auto_reset=True)
-    env_params = env.default_params
-    rng = jax.random.PRNGKey(np.random.randint(2**31))
-    step_fn = jax.jit(env.step)
-
-    rl_agent = RlAgent()
+    env = CraftaxEnv(123)
     tactic_agent = TacticAgent()
-    test_agent = TestAgent(env)
+    agent = TestAgent()
 
-    rng, _rng = jax.random.split(rng)
-    obs, env_state = env.reset(_rng, env_params)
-
-    traj_history = {"state": [env_state], "action": [], "reward": [], "done": []}
-
-    clock = pygame.time.Clock()
+    state = env.reset()
+    traj = Trajectory()
 
     done = False
 
     while not done:
 
-        scen = tactic_agent.get_scen(env_state)
+        scen = tactic_agent.get_scen(state)
         
-        action = test_agent.get_action(env_state, scen)
-
-        """ or
-        if scen.is_action():
-            action = scen.get_action() 
-        else:
-            action = rl_agent.get_action(state, scen)
-
-        """
-
-        rng, _rng = jax.random.split(rng)
-        old_achievements = env_state.achievements
+        action = agent.get_action(state, scen)
         
-        obs, next_env_state, reward, done, info = step_fn(
-            _rng, env_state, action, env_params
-        )
-        
-        new_achievements = next_env_state.achievements
-        print_new_achievements(old_achievements, new_achievements)
+        next_state, reward, done, info = env.step(action, print_achievements=True)
 
-        if reward > 0.8:
-            print(f"Reward: {reward}\n")
+        if not scen.is_action():
+            smart_reward = scen.get_reward(state, next_state)
+            agent.add_exp(state, action, (reward, smart_reward), next_state, done)
 
-        if (scen.is_action()):
-            smart_reward = scen.get_reward(env_state, next_env_state)
-            rl_agent.add_exp(env_state, action, (reward, smart_reward), next_env_state, done)
+        traj.add(state, action, reward)
 
-        traj_history["state"].append(next_env_state)
-        traj_history["action"].append(action)
-        traj_history["reward"].append(reward)
-        traj_history["done"].append(done)
+        state = next_state
 
-        env_state = next_env_state
-
+    traj.save()
     pygame.quit()
-    save_traj_history(traj_history)
