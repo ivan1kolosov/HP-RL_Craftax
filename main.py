@@ -68,6 +68,6 @@ if __name__ == "__main__":
         traj_history["done"].append(done)
 
         env_state = next_env_state
-        
+
     pygame.quit()
     save_traj_history(traj_history)
