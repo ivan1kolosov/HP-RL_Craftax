@@ -1,7 +1,7 @@
 import pygame
 
 from Agents.rl_model import RlAgent
-from Agents.tacticAgent import TacticAgent
+from Agents.tactic import Scenario
 from Agents.testAgent import TestAgent
 
 from tools import CraftaxEnv, Trajectory
@@ -9,7 +9,6 @@ from tools import CraftaxEnv, Trajectory
 if __name__ == "__main__":
 
     env = CraftaxEnv(123)
-    tactic_agent = TacticAgent()
     agent = TestAgent()
 
     state = env.reset()
@@ -19,7 +18,7 @@ if __name__ == "__main__":
 
     while not done:
 
-        scen = tactic_agent.get_scen(state)
+        scen = Scenario(state)
 
         action = agent.get_action(state, scen)
         

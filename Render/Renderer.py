@@ -10,7 +10,6 @@ from craftax.craftax.constants import (
     INVENTORY_OBS_HEIGHT,
     Action,
 )
-from craftax.craftax.envs.craftax_symbolic_env import CraftaxSymbolicEnv as CraftaxEnv
 from craftax.craftax.renderer import render_craftax_pixels
 
 KEY_MAPPING = {
