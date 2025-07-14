@@ -25,7 +25,7 @@ if __name__ == "__main__":
         next_state, reward, done, info = env.step(action, print_achievements=True)
 
         if not scen.is_action():
-            smart_reward = scen.get_reward(state, next_state, print_reward=True)
+            smart_reward = scen.get_reward(state, next_state)
             #agent.add_exp(state, action, (reward, smart_reward), next_state, done)
 
         traj.add(state, action, reward)
