@@ -85,7 +85,7 @@ class CraftaxRenderer:
         font1 = pygame.font.Font(None, 45)
         font2 = pygame.font.Font(None, 30)
         text_color = (255, 255, 255)
-        message = "Task: " + task
+        message = "Task: " + task.name
         for k, v in values.items():
             message += '\n' + str(k) + ': ' + str(v)
         lines = message.split('\n')

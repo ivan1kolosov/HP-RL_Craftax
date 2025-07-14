@@ -21,8 +21,11 @@ class Resource:
         self.value_f = value_f
         self.blocks = blocks
 
-    def value(self, state):
+    def value(self, state: CraftaxState):
         return self.value_f(state)
+    
+    def get_amount(self, state: CraftaxState):
+        return state.inventory.__dict__[self.name]
 
 def required_iron(state: CraftaxState):
     return max(0, 1 * (state.inventory.sword < 3)
@@ -86,9 +89,18 @@ resources = [
              )
 ]
 
+class Task:
+    def __init__(self, name, check_f, reward):
+        self.name = name
+        self.check_f = check_f
+        self.reward = reward
+
+    def check_completeness(self, state: CraftaxState):
+        return self.check_f(state)
+
 class Scenario:
     def __init__(self, state: CraftaxState):
-        self.task = "Explore"
+        self.task = Task("Explore", None, None)
         self.values = dict()
         for r in resources:
             self.values[r.name] = r.value(state)
@@ -102,5 +114,9 @@ class Scenario:
     def get_action(self):
         return NotImplementedError
     
-    def get_reward(self, state, next_state) -> float:
-        return NotImplementedError
+    def get_reward(self, state: CraftaxState, next_state: CraftaxState) -> float:
+        reward = 0.0
+        for r in resources:
+            reward += r.value(state) * (r.get_amount(next_state) - r.get_amount(state))
+        reward += self.task.check_completeness(state) * self.task.reward
+        return reward
