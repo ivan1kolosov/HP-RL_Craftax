@@ -1,5 +1,5 @@
 from craftax.craftax.craftax_state import EnvState as CraftaxState
-from craftax.craftax.constants import BlockType
+from craftax.craftax.constants import BlockType, Achievement
 from craftax.craftax.util.game_logic_utils import get_max_drink
 
 class Resource:
@@ -48,7 +48,7 @@ def value_of_sapphire(state: CraftaxState):
     return 5.0 * (state.inventory.pickaxe >= 4)
 
 def value_of_sapling(state: CraftaxState):
-    return 0.0
+    return (not state.achievements[Achievement.COLLECT_SAPLING.value]) * 0.15
 
 def value_of_water(state: CraftaxState):
     max_drink = get_max_drink(state)
