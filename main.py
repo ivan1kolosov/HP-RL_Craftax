@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 from Agents.rl_model import RlAgent
@@ -8,7 +10,7 @@ from tools import CraftaxEnv, Trajectory
 
 if __name__ == "__main__":
 
-    env = CraftaxEnv(123)
+    env = CraftaxEnv(random.randint(1, 10**9))
     agent = TestAgent()
 
     state = env.reset()

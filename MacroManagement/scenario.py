@@ -1,7 +1,7 @@
 from craftax.craftax.craftax_state import EnvState as CraftaxState
 from craftax.craftax.constants import Action, BlockType
 
-from MacroManagement.resource_types_value import resources
+from MacroManagement.resource_types import resources
 from MacroManagement.vital_characteristics_value import hp_penalty, drink_value, hunger_value
 
 from MacroManagement.task import tasks_pool, TaskType
