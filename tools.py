@@ -47,6 +47,7 @@ class CraftaxEnv:
     
 class Trajectory:
     def __init__(self):
+        self.done = False
         self.data = {"state": [], "action": [], "reward": []}
 
     def add(self, state, action, reward):
@@ -59,7 +60,7 @@ class Trajectory:
         save_name += ".pkl"
         Path(directory).mkdir(parents=True, exist_ok=True)    
         with bz2.BZ2File(save_name + ".pbz2", "w") as f:
-            pickle.dump(self.data, f)
+            pickle.dump(self, f)
     
     def get_sum_reward(self):
         return sum(self.data["reward"])
