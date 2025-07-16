@@ -8,49 +8,49 @@ class Resource:
         self.value_f = value_f
         self.blocks = blocks
 
-    def value(self, state: CraftaxState):
+    def value(self, state: CraftaxState) -> float:
         return self.value_f(state)
     
-    def get_amount(self, state: CraftaxState):
+    def get_amount(self, state: CraftaxState) -> int:
         return state.inventory.__dict__[self.name]
 
-def required_iron(state: CraftaxState):
+def required_iron(state: CraftaxState) -> int:
     return max(0, 1 * (state.inventory.sword < 3)
                + 1 * (state.inventory.pickaxe < 3)
                + 3 * (state.inventory.armour < 1).sum()
                - state.inventory.iron)
 
-def required_diamond(state: CraftaxState):
+def required_diamond(state: CraftaxState) -> int:
     return max(0, 2 * (state.inventory.sword < 4) 
                + 3 * (state.inventory.pickaxe < 4)
                + 3 * (state.inventory.armour < 2).sum()
                - state.inventory.diamond)
 
-def value_of_wood(state: CraftaxState):
+def value_of_wood(state: CraftaxState) -> float:
     return (1 - state.inventory.wood / 99) * 1.0
 
-def value_of_stone(state: CraftaxState):
+def value_of_stone(state: CraftaxState) -> float:
     return max(0.0, 1 - state.inventory.stone / 60) * 1.0 * (state.inventory.pickaxe >= 1)
 
-def value_of_coal(state: CraftaxState):
+def value_of_coal(state: CraftaxState) -> float:
     return max(0.0, 1 - state.inventory.coal / 99) * 1.1 * (state.inventory.pickaxe >= 1)
 
-def value_of_iron(state: CraftaxState):
+def value_of_iron(state: CraftaxState) -> float:
     return 2.0 * (state.inventory.pickaxe >= 2) * bool(required_iron(state))
 
-def value_of_diamond(state: CraftaxState):
+def value_of_diamond(state: CraftaxState) -> float:
     return 5.0 * (state.inventory.pickaxe >= 3) * bool(required_diamond(state))
 
-def value_of_ruby(state: CraftaxState):
+def value_of_ruby(state: CraftaxState) -> float:
     return 5.0 * (state.inventory.pickaxe >= 4)
 
-def value_of_sapphire(state: CraftaxState):
+def value_of_sapphire(state: CraftaxState) -> float:
     return 5.0 * (state.inventory.pickaxe >= 4)
 
-def value_of_sapling(state: CraftaxState):
+def value_of_sapling(state: CraftaxState) -> float:
     return (not state.achievements[Achievement.COLLECT_SAPLING.value]) * 0.15
 
-def value_of_water(state: CraftaxState):
+def value_of_water(state: CraftaxState) -> float:
     max_drink = get_max_drink(state)
     return (1.0 - state.player_drink / max_drink) * 1.5
 
