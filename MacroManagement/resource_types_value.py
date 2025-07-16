@@ -50,10 +50,6 @@ def value_of_sapphire(state: CraftaxState) -> float:
 def value_of_sapling(state: CraftaxState) -> float:
     return (not state.achievements[Achievement.COLLECT_SAPLING.value]) * 0.15
 
-def value_of_water(state: CraftaxState) -> float:
-    max_drink = get_max_drink(state)
-    return (1.0 - state.player_drink / max_drink) * 1.5
-
 resources = [
     Resource("wood",
              value_of_wood,

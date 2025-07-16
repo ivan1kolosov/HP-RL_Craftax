@@ -1,10 +1,18 @@
 from craftax.craftax.craftax_state import EnvState as CraftaxState
 from craftax.craftax.constants import BlockType
 from craftax.craftax.util.game_logic_utils import is_near_block
+from enum import Enum
+
+class TaskType(Enum):
+    FIGHT = "Fight"
+    EXPLORE = "Explore"
+    PLACE_CRAFTING_TABLE = "Place crafting table"
+    PLACE_FURNACE = "Place furnace"
+    BUILD_FORTRESS = "Build fortress"
 
 class Task:
-    def __init__(self, name, reward_f):
-        self.name = name
+    def __init__(self, type, reward_f):
+        self.type = type
         self.reward_f = reward_f
 
     def reward(self, state: CraftaxState, next_state: CraftaxState) -> float:
@@ -32,9 +40,9 @@ def fight_reward(state: CraftaxState, next_state: CraftaxState) -> float:
     return 5.0 if defeated_monster else -0.15
 
 tasks_pool = {
-    "Explore": Task("Explore", explore_reward),
-    "Place crafting table": Task("Place crafting table", place_crafting_table_reward),
-    "Place furnace": Task("Place furnace", place_furnace_reward),
-    "Build fortress": Task("Build fortress", build_fortress_reward),
-    "Fight": Task("Fight", fight_reward)
+    TaskType.EXPLORE: Task(TaskType.EXPLORE, explore_reward),
+    TaskType.PLACE_CRAFTING_TABLE: Task(TaskType.PLACE_CRAFTING_TABLE, place_crafting_table_reward),
+    TaskType.PLACE_FURNACE: Task(TaskType.PLACE_FURNACE, place_furnace_reward),
+    TaskType.BUILD_FORTRESS: Task(TaskType.BUILD_FORTRESS, build_fortress_reward),
+    TaskType.FIGHT: Task(TaskType.FIGHT, fight_reward)
 }

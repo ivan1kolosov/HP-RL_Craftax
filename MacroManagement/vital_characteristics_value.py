@@ -10,4 +10,4 @@ def drink_value(state: CraftaxState) -> float:
     return (1 - state.player_drink / get_max_drink(state))
 
 def hunger_value(state: CraftaxState) -> float:
-    return (1 - state.player_hunger / get_max_food(state)) * 3
+    return (1 - state.player_food / get_max_food(state)) * 3

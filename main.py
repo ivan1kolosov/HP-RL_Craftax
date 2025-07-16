@@ -31,6 +31,7 @@ if __name__ == "__main__":
         traj.add(state, action, reward)
 
         state = next_state
+    traj.done = True
 
     pygame.quit()
     traj.save()
