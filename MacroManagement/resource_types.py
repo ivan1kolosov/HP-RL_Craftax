@@ -1,6 +1,5 @@
 from craftax.craftax.craftax_state import EnvState as CraftaxState
 from craftax.craftax.constants import BlockType, Achievement
-from craftax.craftax.util.game_logic_utils import get_max_drink
 
 class Resource:
     def __init__(self, name, value_f, blocks):
@@ -30,7 +29,7 @@ def value_of_wood(state: CraftaxState) -> float:
     return (1 - state.inventory.wood / 99) * 1.0
 
 def value_of_stone(state: CraftaxState) -> float:
-    return max(0.0, 1 - state.inventory.stone / 60) * 1.0 * (state.inventory.pickaxe >= 1)
+    return max(0.0 + 0.05 * (state.inventory.stone < 99), 1 - state.inventory.stone / 60) * 1.0 * (state.inventory.pickaxe >= 1)
 
 def value_of_coal(state: CraftaxState) -> float:
     return max(0.0, 1 - state.inventory.coal / 99) * 1.1 * (state.inventory.pickaxe >= 1)
