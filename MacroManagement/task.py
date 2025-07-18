@@ -1,7 +1,10 @@
+from enum import Enum
+
 from craftax.craftax.craftax_state import EnvState as CraftaxState
 from craftax.craftax.constants import BlockType
 from craftax.craftax.util.game_logic_utils import is_near_block
-from enum import Enum
+
+from MacroManagement.game_logic_utils import player_in_safety, did_kill_enemy
 
 class TaskType(Enum):
     FIGHT = "Fight"
@@ -22,22 +25,22 @@ def explore_reward(state: CraftaxState, next_state: CraftaxState) -> float:
     return -0.05
 
 def place_crafting_table_reward(state: CraftaxState, next_state: CraftaxState) -> float:
-    is_at_crafting_table = is_near_block(state, BlockType.CRAFTING_TABLE.value)
+    is_at_crafting_table = is_near_block(next_state, BlockType.CRAFTING_TABLE.value)
     return 5.0 if is_at_crafting_table else -0.15
     
 def place_furnace_reward(state: CraftaxState, next_state: CraftaxState) -> float:
-    is_at_crafting_table = is_near_block(state, BlockType.CRAFTING_TABLE.value)
-    is_at_furnace = is_near_block(state, BlockType.FURNACE.value)
+    is_at_crafting_table = is_near_block(next_state, BlockType.CRAFTING_TABLE.value)
+    is_at_furnace = is_near_block(next_state, BlockType.FURNACE.value)
     can_use_furnace = is_at_crafting_table and is_at_furnace
     return 5.0 if can_use_furnace else -0.15
 
 def build_fortress_reward(state: CraftaxState, next_state: CraftaxState) -> float:
-    in_safety = False
+    in_safety = player_in_safety(next_state)
     return 10.0 if in_safety else -0.15
     
 def fight_reward(state: CraftaxState, next_state: CraftaxState) -> float:
-    defeated_monster = False
-    return 5.0 if defeated_monster else -0.15
+    enemy_killed = did_kill_enemy(state, next_state)
+    return 5.0 if enemy_killed else -0.15
 
 tasks_pool = {
     TaskType.EXPLORE: Task(TaskType.EXPLORE, explore_reward),
