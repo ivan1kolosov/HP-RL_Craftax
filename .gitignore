@@ -212,3 +212,6 @@ __marimo__/
 
 #visual
 *.mp4
+
+#models
+*.zip

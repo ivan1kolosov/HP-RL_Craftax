@@ -1,5 +1,4 @@
-from MacroManagement.scenario import Scenario
-from tools import CraftaxEnv 
+from MacroManagement.smartEnv import SmartEnv 
 
 class RlAgent:
     def __init__(self, path_to_model="NA"):
