@@ -1,6 +1,8 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 play_data/
+videos/
+models/
 *.py[codz]
 *$py.class
 
@@ -209,9 +211,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-
-#visual
-*.mp4
-
-#models
-*.zip
