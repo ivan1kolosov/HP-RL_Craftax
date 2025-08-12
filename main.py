@@ -6,14 +6,9 @@ from Agents.rl_model import RlAgent
 from MacroManagement.scenario import Scenario
 from Agents.testAgent import TestAgent
 
-from tools import CraftaxEnv, Episode
+from tools import CraftaxEnv, Episode, SmartEpisode
 
 if __name__ == "__main__":
-    
-    ep = Episode()
-    ep.load("episode_1755003450.pbz2")
-    ep.generate_video()
-    exit(0)
 
     seed = random.randint(1, 10**9)
     env = CraftaxEnv()
@@ -40,8 +35,7 @@ if __name__ == "__main__":
 
         state = next_state
     traj.done = True
-
+    env.save_last_episode()
     pygame.quit()
-    traj.save()
 
     print("Sum reward: " + str(traj.get_sum_reward()))

@@ -51,6 +51,9 @@ class CraftaxEnv:
 
         return next_state, reward, done, info
     
+    def save_last_episode(self):
+        self.episode.save()
+    
 def save_in_folder(object, name, directory):
     save_name = directory + f"/{name}"
     Path(directory).mkdir(parents=True, exist_ok=True)    
@@ -73,7 +76,7 @@ class SmartEpisode:
     def generate_video(self, name="smart_episode", directory="videos"):
         episode = Episode()
         env = CraftaxEnv()
-        obs, state = env.reset(self.seed)
+        state = env.reset(self.seed)
         for action in self.actions:
             next_state, reward, done, info = env.step(action)
             episode.add(state, action, reward)
