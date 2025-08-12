@@ -6,15 +6,21 @@ from Agents.rl_model import RlAgent
 from MacroManagement.scenario import Scenario
 from Agents.testAgent import TestAgent
 
-from tools import CraftaxEnv, Trajectory
+from tools import CraftaxEnv, Episode
 
 if __name__ == "__main__":
+    
+    ep = Episode()
+    ep.load("episode_1755003450.pbz2")
+    ep.generate_video()
+    exit(0)
 
-    env = CraftaxEnv(random.randint(1, 10**9))
+    seed = random.randint(1, 10**9)
+    env = CraftaxEnv()
     agent = TestAgent()
 
-    state = env.reset()
-    traj = Trajectory()
+    state = env.reset(seed)
+    traj = Episode()
 
     done = False
 

@@ -4,6 +4,9 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+import imageio
+from PIL import Image
+
 from craftax.craftax.constants import (
     OBS_DIM,
     BLOCK_PIXEL_SIZE_HUMAN,
@@ -61,9 +64,12 @@ KEY_MAPPING = {
 size_tactic_agent = 500
 
 class CraftaxRenderer:
-    def __init__(self, pixel_render_size=4):
+    def __init__(self, pixel_render_size=1):
         self.pixel_render_size = pixel_render_size
         self.pygame_events = []
+        self.is_recording = False
+        self.video_writer = None
+        self.video_frames = []
 
         self.screen_size = (
             OBS_DIM[1] * BLOCK_PIXEL_SIZE_HUMAN * pixel_render_size + size_tactic_agent,
@@ -71,7 +77,6 @@ class CraftaxRenderer:
             * BLOCK_PIXEL_SIZE_HUMAN
             * pixel_render_size,
         )
-
         # Init rendering
         pygame.init()
         pygame.key.set_repeat(250, 75)
@@ -80,6 +85,28 @@ class CraftaxRenderer:
 
         self._render = jax.jit(render_craftax_pixels, static_argnums=(1,))
 
+    def start_video_recording(self):
+        """Начать запись видео в указанный файл"""
+        self.is_recording = True
+        self.video_frames = []
+
+    def stop_video_recording(self, filename, fps=10):
+        """Остановить запись и сохранить видеофайл"""
+        if not self.is_recording:
+            return
+        self.is_recording = False
+        
+        # Сохраняем кадры в видеофайл
+        if self.video_frames:
+            with imageio.get_writer(
+                filename,
+                fps=fps,
+                macro_block_size=None  # Для обработки произвольных размеров
+            ) as writer:
+                for frame in self.video_frames:
+                    writer.append_data(frame)
+            
+        self.video_frames = []
 
     def font(self, task, values):
         font1 = pygame.font.Font(None, 45)
@@ -123,6 +150,16 @@ class CraftaxRenderer:
         for line in rendered_lines:
             self.screen_surface.blit(line, (0, y_offset))
             y_offset += line.get_height() + 5
+
+        if self.is_recording:
+            # Получаем текущее состояние экрана как 3D numpy array
+            frame = np.array(pygame.surfarray.pixels3d(self.screen_surface))
+            
+            # Транспонируем и меняем порядок осей (width, height) -> (height, width)
+            frame = np.transpose(frame, (1, 0, 2))
+            small_frame = np.array(Image.fromarray(frame).resize((450, 300), Image.LANCZOS))
+            # Добавляем кадр в буфер
+            self.video_frames.append(small_frame)
 
     def is_quit_requested(self):
         for event in self.pygame_events:
