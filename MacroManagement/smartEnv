@@ -1,0 +1,49 @@
+from tools import CraftaxEnv
+from MacroManagement.scenario import Scenario
+from craftax.craftax.constants import Action
+
+move_actions_pool = [Action.UP, Action.RIGHT, Action.DOWN, Action.LEFT]
+place_block_actions_pool = [Action.PLACE_FURNACE, Action.PLACE_STONE, Action.PLACE_TABLE, Action.PLACE_TORCH]
+fight_actions_pool = [Action.SHOOT_ARROW, Action.CAST_FIREBALL, Action.CAST_ICEBALL]
+default_actions_pool = move_actions_pool + place_block_actions_pool + [Action.DO]
+
+class SmartEnv:
+    def __init__(self, seed: int, actions_pool: list):
+        self.env = CraftaxEnv()
+        self.actions_pool = actions_pool
+        self.state = None
+        self.scen = None
+
+    def reset(self, seed, options=None):
+        obs, self.state = self.env.reset(seed)
+        self.scen = Scenario(self.state)
+        if self.episode is not None:
+            self.episode.save()
+        return get_observation(self.state, self.scen), {}
+    
+    def step(self, action: int):
+        next_state, reward, done, info = self.env.step(self.actions_pool[action])
+        reward = self.scen.get_reward(self.state, next_state, done)
+
+        if not done:
+            self.state, reward1, done, info = self._execute_tricky_actions(self, next_state)
+            reward += reward1
+
+        return (get_observation(self.state, self.scen),
+                reward if not done else -10.0,
+                done,
+                False,
+                {})
+
+    def _execute_tricky_actions(self, state):
+        self.scen = Scenario(state)
+        done = False
+        cum_reward = 0.0
+        while self.scen.is_action():
+            state, reward, done, info = self.env.step(self.scen.get_action())
+            cum_reward += reward
+            self.scen = Scenario(state)
+        return state, reward, done, {}
+
+def get_observation(state: SmartEnv, scen: Scenario):
+    pass
