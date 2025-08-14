@@ -1,2 +1,3 @@
 from RlTraining.model_training import train
-train("models/ppo_smartenv_final.zip")
+if __name__ == "__main__":
+    train("models/ppo_smartenv_model.zip", "ppo_smartenv_model400k")

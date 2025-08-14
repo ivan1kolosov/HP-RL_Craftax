@@ -1,11 +1,9 @@
-from MacroManagement.smartEnv import SmartEnv 
+from RlTraining.model_training import load_model
 
 class RlAgent:
-    def __init__(self, path_to_model="NA"):
-        pass
+    def __init__(self, path):
+        self.model = load_model(path)
 
-    def get_action(self, state, scen):
-        return NotImplementedError
-    
-    def add_exp(self, state, action, reward, next_state, done):
-        return NotImplementedError
+    def get_action(self, obs):
+        action, _ = self.model.predict(obs, deterministic=True) 
+        return int(action)

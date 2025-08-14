@@ -2,6 +2,7 @@ import bz2
 import pickle
 import time
 import jax
+import numpy as np
 from pathlib import Path
 from craftax.craftax_env import make_craftax_env_from_name
 
@@ -33,7 +34,7 @@ class CraftaxEnv:
         old_achievements = self.state.achievements
 
         obs, next_state, reward, done, info = self.env.step(
-            self.__get_rng(), self.state, action, self.params
+            self.__get_rng(), self.state, action.value, self.params
         )
         self.state = next_state
 
@@ -118,3 +119,30 @@ class Episode:
         for state in self.data["state"]:
             renderer.render(state, Scenario(state))
         renderer.stop_video_recording(f"{directory}/{name}_{int(time.time())}.mp4", fps=10)
+
+def get_local_view(arr: np.ndarray, x: int, y: int, fill_value=0.0, n: int = 9, m: int = 11) -> np.ndarray:
+    half_n = n // 2
+    half_m = m // 2
+
+    h, w = arr.shape
+    x_start = x - half_n
+    x_end = x + half_n + 1
+    y_start = y - half_m
+    y_end = y + half_m + 1
+    
+    local = np.full((n, m), fill_value, dtype=arr.dtype)
+    
+    copy_x_start = max(0, x_start)
+    copy_x_end = min(h, x_end)
+    copy_y_start = max(0, y_start)
+    copy_y_end = min(w, y_end)
+    
+    local_x_start = copy_x_start - x_start
+    local_x_end = local_x_start + (copy_x_end - copy_x_start)
+    local_y_start = copy_y_start - y_start
+    local_y_end = local_y_start + (copy_y_end - copy_y_start)
+    
+    local[local_x_start:local_x_end, local_y_start:local_y_end] = \
+        arr[copy_x_start:copy_x_end, copy_y_start:copy_y_end]
+    
+    return local
