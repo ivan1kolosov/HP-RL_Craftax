@@ -9,7 +9,7 @@ class ResidualCNNBlock(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, kernel_size: int = 3, stride: int = 1, 
                  expansion: int = 4, dropout: float = 0.1):
         super().__init__()
-        # Проверка делимости каналов
+
         assert out_channels % expansion == 0, "out_channels must be divisible by expansion"
         self.expansion = expansion
         inner_channels = out_channels // expansion
@@ -54,7 +54,7 @@ class ResidualCNNBlock(nn.Module):
         out = self.conv3(out)
         out = self.bn3(out)
         
-        out = self.dropout(out)  # Dropout перед сложением
+        out = self.dropout(out)
         out += identity
         out = self.relu(out)
         
@@ -70,7 +70,6 @@ class ResidualMLPBlock(nn.Module):
         self.relu = nn.GELU()
         self.dropout = nn.Dropout(dropout)
         
-        # Полноценный shortcut с нормализацией
         self.shortcut = nn.Sequential()
         if in_features != out_features:
             self.shortcut = nn.Sequential(
@@ -90,7 +89,7 @@ class ResidualMLPBlock(nn.Module):
         out = self.fc2(out)
         out = self.ln2(out)
         
-        out = self.dropout(out)  # Dropout перед сложением
+        out = self.dropout(out)
         out += identity
         out = self.relu(out)
         
@@ -99,33 +98,28 @@ class ResidualMLPBlock(nn.Module):
 class AttentionPooling(nn.Module):
     def __init__(self, in_channels: int, reduction_ratio: int = 8):
         super().__init__()
-        # Гибкое вычисление каналов с округлением
+
         reduced_channels = max(1, in_channels // reduction_ratio)
         
         self.query = nn.Conv2d(in_channels, reduced_channels, kernel_size=1)
         self.key = nn.Conv2d(in_channels, reduced_channels, kernel_size=1)
         self.value = nn.Conv2d(in_channels, in_channels, kernel_size=1)
         
-        # Более стабильная инициализация
         self.gamma = nn.Parameter(th.zeros(1))
 
     def forward(self, x: Tensor) -> Tensor:
         batch_size, C, H, W = x.shape
         
-        # Пропуск внимания для больших карт
-        if H * W > 64:  # Эмпирический порог
+        if H * W > 64:
             return x
             
-        # Создаем запрос, ключи и значения
         Q = self.query(x).view(batch_size, -1, H * W).permute(0, 2, 1)
         K = self.key(x).view(batch_size, -1, H * W)
         V = self.value(x).view(batch_size, -1, H * W)
         
-        # Вычисляем внимание
         attention = th.bmm(Q, K)
         attention = th.softmax(attention, dim=-1)
         
-        # Применяем внимание
         out = th.bmm(V, attention.permute(0, 2, 1))
         out = out.view(batch_size, C, H, W)
         
@@ -135,14 +129,10 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: spaces.Dict, features_dim: int = 1024):
         super().__init__(observation_space, features_dim)
         
-        # Получаем параметры из observation_space
         map_shape = observation_space['map'].shape
         local_map_shape = observation_space['local_map'].shape
         numeric_dims = observation_space['numeric'].shape[0]
         
-        # --------------------------------------------------
-        # 1. Ветка для основной карты (map)
-        # --------------------------------------------------
         self.map_cnn = nn.Sequential(
             nn.Conv2d(map_shape[0], 64, kernel_size=7, stride=2, padding=3, bias=False),
             nn.BatchNorm2d(64),
@@ -159,9 +149,6 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
             nn.Flatten()
         )
         
-        # --------------------------------------------------
-        # 2. Ветка для локальной карты (local_map)
-        # --------------------------------------------------
         self.local_map_cnn = nn.Sequential(
             nn.Conv2d(local_map_shape[0], 32, kernel_size=5, stride=2, padding=2, bias=False),
             nn.BatchNorm2d(32),
@@ -175,9 +162,6 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
             nn.Flatten()
         )
         
-        # --------------------------------------------------
-        # 3. Ветка для числовых данных (numeric)
-        # --------------------------------------------------
         self.numeric_mlp = nn.Sequential(
             ResidualMLPBlock(numeric_dims, 256),
             ResidualMLPBlock(256, 256),
@@ -187,25 +171,16 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
             nn.GELU()
         )
         
-        # --------------------------------------------------
-        # Вычисление размеров выходов всех веток
-        # --------------------------------------------------
         with th.no_grad():
-            # Тестовый прогон для map
             map_sample = th.randn(2, *map_shape)  # [2, C, H, W]
             map_out_dim = self.map_cnn(map_sample).shape[1]
             
-            # Тестовый прогон для local_map
             local_map_sample = th.randn(2, *local_map_shape)  # [2, C, H, W]
             local_map_out_dim = self.local_map_cnn(local_map_sample).shape[1]
             
-            # Тестовый прогон для numeric
             numeric_sample = th.randn(2, numeric_dims)
             numeric_out_dim = self.numeric_mlp(numeric_sample).shape[1]
         
-        # --------------------------------------------------
-        # Комбинированный выход
-        # --------------------------------------------------
         self.combine = nn.Sequential(
             ResidualMLPBlock(map_out_dim + local_map_out_dim + numeric_out_dim, features_dim),
             ResidualMLPBlock(features_dim, features_dim),
@@ -215,11 +190,9 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
             nn.GELU()
         )
 
-        # Инициализация весов
         self.apply(self._init_weights)
 
     def _init_weights(self, m):
-        """Инициализация весов слоёв"""
         if isinstance(m, (nn.Conv2d, nn.Linear)):
             nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             if m.bias is not None:
@@ -229,16 +202,13 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
             nn.init.constant_(m.bias, 0)
 
     def forward(self, observations: Dict[str, th.Tensor]) -> th.Tensor:
-        # Используем данные как есть (формат [B, C, H, W])
         map_input = observations['map']
         local_map_input = observations['local_map']
         numeric_input = observations['numeric']
         
-        # Обработка всех веток
         map_features = self.map_cnn(map_input)
         local_map_features = self.local_map_cnn(local_map_input)
         numeric_features = self.numeric_mlp(numeric_input)
         
-        # Комбинация признаков
         combined = th.cat([map_features, local_map_features, numeric_features], dim=1)
         return self.combine(combined)

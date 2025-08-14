@@ -32,33 +32,24 @@ class CraftaxSmartState(CraftaxState):
         value_map = np.zeros((48, 48), dtype=np.float32)
         level = self.player_level
         
-        # Обработка блоков
         current_map = self.map[level]
         for block_type, value in values.items():
-            # Векторизованное присвоение значений блокам
             value_map[current_map == block_type.value] = value
         
-        # Обработка мобов
         mob_value = scen.get_mobs_value(self)
         
-        # Вспомогательная функция для добавления значений мобов
         def add_mob_value(positions, mask, value):
-            # Фильтрация активных мобов
             active_mask = mask[level]
             if not np.any(active_mask):
                 return
                 
-            # Получаем позиции активных мобов
             active_positions = positions[level][active_mask]
             
-            # Преобразуем координаты в кортеж индексов
             rows = active_positions[:, 0].astype(int)
             cols = active_positions[:, 1].astype(int)
-            
-            # Безопасное добавление значений (с обработкой дубликатов)
+
             np.add.at(value_map, (rows, cols), value)
         
-        # Добавляем значения для каждого типа мобов
         add_mob_value(self.melee_mobs.position, self.melee_mobs.mask, mob_value["enemy"])
         add_mob_value(self.ranged_mobs.position, self.ranged_mobs.mask, mob_value["enemy"])
         add_mob_value(self.passive_mobs.position, self.passive_mobs.mask, mob_value["friend"])
