@@ -3,6 +3,8 @@ __pycache__/
 play_data/
 videos/
 models/
+logs/
+checkpoints/
 *.py[codz]
 *$py.class
 

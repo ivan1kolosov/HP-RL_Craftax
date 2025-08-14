@@ -1,44 +1,101 @@
-import numpy as np
 from pathlib import Path
-
 from stable_baselines3 import PPO
-from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import CheckpointCallback
-
-from shimmy import GymV21CompatibilityV0
-
-from MacroManagement.smartEnv import SmartEnv, default_actions_pool
+from MacroManagement.smartEnv import default_actions_pool
 from RlTraining.customFeatureExtractor import CustomFeatureExtractor
+from stable_baselines3.common.vec_env import SubprocVecEnv
+from stable_baselines3.common.vec_env import VecMonitor  # Добавить этот импорт
+from stable_baselines3.common.callbacks import BaseCallback  # Добавить этот импорт
+import numpy as np
+import gymnasium as gym
+
+# Register your environment
+gym.register(
+    id='SmartEnv-v0',
+    entry_point='MacroManagement.smartEnv:SmartEnv',
+    kwargs={'actions_pool': default_actions_pool}
+)
+
+policy_kwargs = {
+    "features_extractor_class": CustomFeatureExtractor,
+    "features_extractor_kwargs": {
+        "features_dim": 512
+    },
+    "net_arch": {
+        "pi": [256, 256],
+        "vf": [256, 256]
+    }
+}
+
+SEED = 123
+ACTIONS_POOL = default_actions_pool
+
+class MetricsLoggerCallback(BaseCallback):
+    def __init__(self, verbose=0):
+        super().__init__(verbose)
+        self.rewards_buffer = []
+        self.lengths_buffer = []
+        self.episode_count = 0
+        self.log_freq = 10  # Частота логирования
+
+    def _on_step(self) -> bool:
+        # Собираем информацию только о завершенных эпизодах
+        for info in self.locals.get("infos", []):
+            if "episode" in info:
+                self.rewards_buffer.append(info["episode"]["r"])
+                self.lengths_buffer.append(info["episode"]["l"])
+                self.episode_count += 1
+
+        # Логируем только при наличии данных и с заданной частотой
+        if self.n_calls % self.log_freq == 0 and self.episode_count > 0:
+            mean_reward = sum(self.rewards_buffer) / self.episode_count
+            mean_length = sum(self.lengths_buffer) / self.episode_count
+            
+            self.logger.record("train/mean_episode_reward", mean_reward)
+            self.logger.record("train/mean_episode_length", mean_length)
+            
+            # Сбрасываем буферы вместо накопления всех данных
+            self.rewards_buffer = []
+            self.lengths_buffer = []
+            self.episode_count = 0
+        
+        return True
+
+def make_env():
+    """Create and return a single environment instance"""
+    # Create the environment using its registered ID
+    env = gym.make('SmartEnv-v0')
+    return env
+
+def get_envs(n_envs=4):
+    """Get vectorized environments with monitoring"""
+    env = SubprocVecEnv([make_env for _ in range(n_envs)])
+    env = VecMonitor(env)  # Добавляем мониторинг
+    return env
+
+def load_model(path, env=None):
+    """Load a saved model"""
+    return PPO.load(
+        path,
+        custom_objects={"policy_kwargs": policy_kwargs},
+        device="auto",
+        env=env
+    )
 
 def train(path=None, name="ppo_smartenv_model"):
-    # Конфигурация обучения
-    SEED = 123
-    ACTIONS_POOL = default_actions_pool
-    TOTAL_TIMESTEPS = 1_000_000
+    TOTAL_TIMESTEPS = 200_000
     SAVE_FREQ = 100_000
     LOG_DIR = "./logs"
     CHECKPOINT_DIR = "./checkpoints"
 
-    env = make_vec_env(lambda: GymV21CompatibilityV0(env=SmartEnv(ACTIONS_POOL)),
-                        n_envs=4,
-                        seed=SEED)
+    # Use vectorized environments for training
+    env = get_envs()
 
     checkpoint_callback = CheckpointCallback(
         save_freq=SAVE_FREQ,
         save_path=CHECKPOINT_DIR,
         name_prefix="ppo_smartenv"
     )
-
-    policy_kwargs = {
-            "features_extractor_class": CustomFeatureExtractor,
-            "features_extractor_kwargs": {
-            "features_dim": 512  # Размер выходного вектора признаков
-            },
-            "net_arch": {
-                "pi": [256, 256],  # Архитектура для policy сети
-                "vf": [256, 256]   # Архитектура для value функции
-            }
-        }
 
     if path is None:
         model = PPO(
@@ -48,31 +105,23 @@ def train(path=None, name="ppo_smartenv_model"):
             seed=SEED,
             tensorboard_log=LOG_DIR,
             device="auto",
-            batch_size=256,
-            n_steps=2048,
+            batch_size=64,
+            n_steps=512,
             n_epochs=10,
-            learning_rate=3e-4,
+            learning_rate=1e-3,
             gamma=0.99,
             gae_lambda=0.95,
             ent_coef=0.01,
-            policy_kwargs = policy_kwargs
+            policy_kwargs=policy_kwargs
         )
     else:
-        model = model = PPO.load(
-            path,
-            custom_objects={
-                "policy_kwargs": policy_kwargs
-            },
-            device="auto"  # Автовыбор CPU/GPU
-        )
-
-    # model.learn(
-    #     total_timesteps=TOTAL_TIMESTEPS,
-    #     callback=checkpoint_callback,
-    #     tb_log_name="ppo_run"
-    # )
+        model = load_model(path, env)
+    metrics_callback = MetricsLoggerCallback()
+    model.learn(
+        total_timesteps=TOTAL_TIMESTEPS,
+        callback=[checkpoint_callback, metrics_callback],
+        tb_log_name="ppo_run"
+    )
 
     Path("models").mkdir(parents=True, exist_ok=True)
-
-    print("Saving model")
     model.save(f"models/{name}")

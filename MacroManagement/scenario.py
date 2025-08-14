@@ -1,3 +1,5 @@
+import numpy as np
+
 from craftax.craftax.craftax_state import EnvState as CraftaxState
 from craftax.craftax.constants import Action, BlockType
 
@@ -12,7 +14,7 @@ class Scenario:
         self.strict_action = None
         self.init_values(state)
 
-    def init_values(self, state):
+    def init_values(self, state: CraftaxState):
         self.values = dict()
         for r in resources:
             self.values[r.name] = r.value(state)
@@ -43,15 +45,11 @@ class Scenario:
     def get_reward(self, state: CraftaxState, next_state: CraftaxState, print_reward=False) -> float:
         reward = 0.0
 
-        #resources impact
-        for r in resources:
-            reward += r.value(state) * (r.get_amount(next_state) - r.get_amount(state))
-
         #vital characteristics impact
         reward += hp_penalty(state, next_state)
         if next_state.player_drink > state.player_drink:
             reward += drink_value(state)
-        if next_state.player_hunger > state.player_hunger:
+        if next_state.player_food > state.player_food:
             reward += hunger_value(state)
 
         #task impact
@@ -61,4 +59,10 @@ class Scenario:
             print("Smart reward: ", reward)
 
         return reward
+    
+    def get_task_mask(self):
+        res = [0.0] * len(tasks_pool)
+        res[self.task.number] = 1.0
+        return res
+        
     
