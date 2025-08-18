@@ -3,27 +3,19 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import CheckpointCallback
 from MacroManagement.smartEnv import default_actions_pool
 from RlTraining.customFeatureExtractor import CustomFeatureExtractor
-from stable_baselines3.common.vec_env import SubprocVecEnv
-from stable_baselines3.common.vec_env import VecMonitor  # Добавить этот импорт
-from stable_baselines3.common.callbacks import BaseCallback  # Добавить этот импорт
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
+from stable_baselines3.common.callbacks import BaseCallback
 import numpy as np
 import gymnasium as gym
-
-# Register your environment
-gym.register(
-    id='SmartEnv-v0',
-    entry_point='MacroManagement.smartEnv:SmartEnv',
-    kwargs={'actions_pool': default_actions_pool}
-)
 
 policy_kwargs = {
     "features_extractor_class": CustomFeatureExtractor,
     "features_extractor_kwargs": {
-        "features_dim": 512
+        "features_dim": 256
     },
     "net_arch": {
-        "pi": [256, 256],
-        "vf": [256, 256]
+        "pi": [128, 128],
+        "vf": [128, 128]
     }
 }
 
@@ -36,17 +28,15 @@ class MetricsLoggerCallback(BaseCallback):
         self.rewards_buffer = []
         self.lengths_buffer = []
         self.episode_count = 0
-        self.log_freq = 10  # Частота логирования
+        self.log_freq = 10
 
     def _on_step(self) -> bool:
-        # Собираем информацию только о завершенных эпизодах
         for info in self.locals.get("infos", []):
             if "episode" in info:
                 self.rewards_buffer.append(info["episode"]["r"])
                 self.lengths_buffer.append(info["episode"]["l"])
                 self.episode_count += 1
 
-        # Логируем только при наличии данных и с заданной частотой
         if self.n_calls % self.log_freq == 0 and self.episode_count > 0:
             mean_reward = sum(self.rewards_buffer) / self.episode_count
             mean_length = sum(self.lengths_buffer) / self.episode_count
@@ -54,7 +44,6 @@ class MetricsLoggerCallback(BaseCallback):
             self.logger.record("train/mean_episode_reward", mean_reward)
             self.logger.record("train/mean_episode_length", mean_length)
             
-            # Сбрасываем буферы вместо накопления всех данных
             self.rewards_buffer = []
             self.lengths_buffer = []
             self.episode_count = 0
@@ -62,19 +51,15 @@ class MetricsLoggerCallback(BaseCallback):
         return True
 
 def make_env():
-    """Create and return a single environment instance"""
-    # Create the environment using its registered ID
     env = gym.make('SmartEnv-v0')
     return env
 
 def get_envs(n_envs=4):
-    """Get vectorized environments with monitoring"""
     env = SubprocVecEnv([make_env for _ in range(n_envs)])
-    env = VecMonitor(env)  # Добавляем мониторинг
+    env = VecMonitor(env)
     return env
 
 def load_model(path, env=None):
-    """Load a saved model"""
     return PPO.load(
         path,
         custom_objects={"policy_kwargs": policy_kwargs},
@@ -88,7 +73,6 @@ def train(path=None, name="ppo_smartenv_model"):
     LOG_DIR = "./logs"
     CHECKPOINT_DIR = "./checkpoints"
 
-    # Use vectorized environments for training
     env = get_envs()
 
     checkpoint_callback = CheckpointCallback(
@@ -105,10 +89,10 @@ def train(path=None, name="ppo_smartenv_model"):
             seed=SEED,
             tensorboard_log=LOG_DIR,
             device="auto",
-            batch_size=64,
-            n_steps=512,
-            n_epochs=10,
-            learning_rate=1e-3,
+            batch_size=256,
+            n_steps=1024,
+            n_epochs=4,
+            learning_rate=3e-4,
             gamma=0.99,
             gae_lambda=0.95,
             ent_coef=0.01,
