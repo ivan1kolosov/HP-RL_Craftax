@@ -1,3 +1,4 @@
+import gymnasium as gym
 from gymnasium import spaces, Env
 import numpy as np
 
@@ -68,6 +69,12 @@ class SmartEnv(Env):
             cum_reward += reward
             self.scen = Scenario(state)
         return state, cum_reward, done, {}
+    
+gym.register(
+    id='SmartEnv-v0',
+    entry_point='MacroManagement.smartEnv:SmartEnv',
+    kwargs={'actions_pool': default_actions_pool}
+)
 
 input_dims = {
     "map": (5, 48, 48),

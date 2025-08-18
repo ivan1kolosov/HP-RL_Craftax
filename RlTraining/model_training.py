@@ -8,20 +8,14 @@ from stable_baselines3.common.callbacks import BaseCallback
 import numpy as np
 import gymnasium as gym
 
-gym.register(
-    id='SmartEnv-v0',
-    entry_point='MacroManagement.smartEnv:SmartEnv',
-    kwargs={'actions_pool': default_actions_pool}
-)
-
 policy_kwargs = {
     "features_extractor_class": CustomFeatureExtractor,
     "features_extractor_kwargs": {
-        "features_dim": 512
+        "features_dim": 256
     },
     "net_arch": {
-        "pi": [256, 256],
-        "vf": [256, 256]
+        "pi": [128, 128],
+        "vf": [128, 128]
     }
 }
 
@@ -95,10 +89,10 @@ def train(path=None, name="ppo_smartenv_model"):
             seed=SEED,
             tensorboard_log=LOG_DIR,
             device="auto",
-            batch_size=64,
-            n_steps=512,
-            n_epochs=10,
-            learning_rate=1e-3,
+            batch_size=256,
+            n_steps=1024,
+            n_epochs=4,
+            learning_rate=3e-4,
             gamma=0.99,
             gae_lambda=0.95,
             ent_coef=0.01,
