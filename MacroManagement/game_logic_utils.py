@@ -36,5 +36,5 @@ def can_break_mask(state: CraftaxState):
 
 def can_walk_mask(state: CraftaxState):
     return (~is_in_solid_block_mask(state) 
-            & ~np.isin(state.map[state.player_level], [BlockType.WATER, BlockType.LAVA])
+            & ~np.isin(state.map[state.player_level], [BlockType.WATER.value, BlockType.LAVA.value])
             & ~state.mob_map[state.player_level])
